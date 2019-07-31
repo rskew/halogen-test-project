@@ -10,7 +10,7 @@ import Halogen.VDom.Driver (runUI)
 import Web.HTML (window)
 import Web.HTML.Window (innerWidth, innerHeight)
 
-import Circles as C
+import Graph as G
 
 main :: Effect Unit
 main = HA.runHalogenAff do
@@ -19,4 +19,4 @@ main = HA.runHalogenAff do
   windowWidth <- H.liftEffect $ innerWidth w
   windowHeight <- H.liftEffect $ innerHeight w
   H.liftEffect $ log $ "Window size: " <> show windowWidth <> " " <> show windowHeight
-  runUI C.myCircles { width : windowWidth, height : windowHeight } body
+  runUI G.graph { width : windowWidth, height : windowHeight } body

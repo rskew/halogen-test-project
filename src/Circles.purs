@@ -35,20 +35,20 @@ type CircleId = String
 type Edge = { x1 :: Number, y1 :: Number, x2 :: Number, y2 :: Number }
 type Circle = { id :: String, pos :: Drag.PageCoord, text :: String }
 
-type AppState = { windowSize :: WindowSize
-                , dragState :: Maybe Drag.DragData
-                , circles :: Map CircleId Circle
-                , edges :: Array Edge
-                , drawingArrowState :: Maybe { x1 :: Number
-                                             , y1 :: Number
-                                             , x2 :: Number
-                                             , y2 :: Number
-                                             }
-                , dragSource :: Maybe CircleId
-                , dropTarget :: Maybe CircleId
-                }
+type CircleState = { windowSize :: WindowSize
+                   , dragState :: Maybe Drag.DragData
+                   , circles :: Map CircleId Circle
+                   , edges :: Array Edge
+                   , drawingArrowState :: Maybe { x1 :: Number
+                                                , y1 :: Number
+                                                , x2 :: Number
+                                                , y2 :: Number
+                                                }
+                   , dragSource :: Maybe CircleId
+                   , dropTarget :: Maybe CircleId
+                   }
 
-initialState :: WindowSize -> AppState
+initialState :: WindowSize -> CircleState
 initialState = \windowSize -> { circles : Map.fromFoldable
                                 [ Tuple "goober"
                                   { id : "goober"
@@ -83,17 +83,17 @@ data Query a =
   | DeleteNode CircleId a
   | PreventDefault WE.Event (Query a)
   | StopPropagation WE.Event (Query a)
+  | TestLog String a
 
 
--- | The slot address type for the Ace component.
-data AceSlot = AceSlot
-derive instance eqAceSlot :: Eq AceSlot
-derive instance ordAceSlot :: Ord AceSlot
+data Message =
+    Drag CircleId Drag.DragData
+  | Mouseover (Maybe CircleId)
+  | DragEnd CircleId
+  | Delete CircleId
 
-data Message = Toggled Boolean
-
-myCircles :: H.Component HH.HTML Query { width :: Int, height :: Int } Message Aff
-myCircles =
+circleNode :: H.Component HH.HTML Query { width :: Int, height :: Int } Message Aff
+circleNode =
   H.lifecycleComponent
     { initialState : initialState
     , render : render
@@ -104,7 +104,7 @@ myCircles =
     }
   where
 
-  render :: AppState -> H.ComponentHTML Query
+  render :: CircleState -> H.ComponentHTML Query
   render state =
     let
       circleView = \circleState -> SE.g []
@@ -189,7 +189,7 @@ myCircles =
         --[ svgView (drawingArrowView state.drawingArrowState <> circles <> lines) ]
         [ svgView circles ]
 
-  eval :: Query ~> H.ComponentDSL AppState Query Message Aff
+  eval :: Query ~> H.ComponentDSL CircleState Query Message Aff
   eval = case _ of
     PreventDefault e q -> do
       H.liftEffect $ WE.preventDefault e
@@ -214,6 +214,7 @@ myCircles =
                 Nothing -> pure unit
                 Just circle -> do
                   H.modify_ _{ circles = Map.insert source (circle { pos = Drag.mouseEventToPageCoord mouseEvent }) state.circles }
+                  H.raise $ Drag circle.id dragData
           --H.modify_ _{ drawingArrowState = Just { x1 : dragData.x - dragData.offsetX
           --                                      , y1 : dragData.y - dragData.offsetY
           --                                      , x2 : dragData.x
@@ -221,6 +222,13 @@ myCircles =
           --                                      }
           --           }
         Drag.Done mouseEvent -> do
+          case state.dragSource of
+            Nothing -> pure unit
+            Just source ->
+              case Map.lookup source state.circles of
+                Nothing -> pure unit
+                Just circle -> do
+                  H.raise $ DragEnd circle.id
           pure unit
           --state <- H.get
           --let dropTarget = state.dropTarget >>= \dropTargetId -> Map.lookup dropTargetId state.circles
@@ -233,6 +241,7 @@ myCircles =
           --                 , drawingArrowState = Nothing
           --                 }
     DropTarget maybeTarget next -> next <$ do
+      H.raise $ Mouseover maybeTarget
       H.modify_ _{ dropTarget = maybeTarget }
     TextInput graphNodeId keyboardEvent next -> next <$ do
       let event = KE.toEvent keyboardEvent
@@ -258,6 +267,9 @@ myCircles =
       state <- H.get
       H.modify_ _{ circles = Map.delete circleId state.circles }
       H.liftEffect $ log $ "Removed circle with id " <> circleId
+      H.raise $ Delete circleId
+    TestLog str next -> next <$ do
+      H.liftEffect $ log str
 
 getContentEditableText :: DN.Node -> Effect String
 getContentEditableText node = do
