@@ -11,11 +11,11 @@ line {
     border: 1px solid #cccb;
     width: auto;
     min-width: 5%;
-    min-width: 200px;
-    max-width: 80%;
+    min-width: 100px;
+    max-width: 101%;
     min-height: 5%;
-    min-height: 100px;
-    max-height: 80%;
+    min-height: 50;
+    max-height: 101%;
     position: absolute;
     border-radius: 3px;
     outline: 0px solid transparent;
