@@ -66,16 +66,16 @@ dragEventSource mouseEvent = ES.eventSource' \emit → do
   let initEv = mouseEventToPageCoord mouseEvent
   eventRef ← Ref.new initEv
   remover ← Ref.new (pure unit :: Effect Unit)
-
-  mouseMove <- eventListener \ev → do
-    prevEv ← Ref.read eventRef
-    let
-      ev' = unsafeEventToPageCoord ev
-      x1 = prevEv.pageX
-      y1 = prevEv.pageY
-      x2 = ev'.pageX
-      y2 = ev'.pageY
-      dragData =
+  prevEv ← Ref.read eventRef
+  let
+    dragData = \ev ->
+      let
+        ev' = unsafeEventToPageCoord ev
+        x1 = prevEv.pageX
+        y1 = prevEv.pageY
+        x2 = ev'.pageX
+        y2 = ev'.pageY
+      in
         { x: x2
         , y: y2
         , deltaX: x2 - x1
@@ -83,8 +83,11 @@ dragEventSource mouseEvent = ES.eventSource' \emit → do
         , offsetX: x2 - initEv.pageX
         , offsetY: y2 - initEv.pageY
         }
+
+  mouseMove <- eventListener \ev → do
+    let ev' = unsafeEventToPageCoord ev
     Ref.write ev' eventRef
-    emit $ Move (unsafeEventToMouseEvent ev) dragData
+    emit $ Move (unsafeEventToMouseEvent ev) $ dragData ev
 
   mouseUp <- eventListener \ev → do
     join $ Ref.read remover

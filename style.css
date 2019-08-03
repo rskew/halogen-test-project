@@ -27,3 +27,23 @@ line {
 foreignObject {
     overflow: visible;
 }
+
+.node {
+}
+
+.halo {
+    fill: #fff0;
+    /*
+    stroke: #0001;
+    */
+    stroke: #fb07;
+    stroke-width: 25;
+    /*
+    opacity: 0.0;
+    */
+}
+
+.halo.ready {
+    stroke: #fb07;
+}
+
