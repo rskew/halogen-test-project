@@ -9,7 +9,7 @@
   "dependencies": {
     "purescript-prelude": "^4.0.0",
     "purescript-halogen": "4.0.0",
-    "purescript-halogen-svg": "file:///home/rowan/projects/purescript-halogen-svg/.git#c95ec850f00adf77323e22a7427ec1cd2a603915",
+    "purescript-halogen-svg": "git@github.com/rskew/purescript-halogen-svg.git#c95ec850f00adf77323e22a7427ec1cd2a603915",
     "purescript-uuid": "^6.0.0"
   },
   "devDependencies": {
